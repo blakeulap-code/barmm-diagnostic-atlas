@@ -289,6 +289,41 @@
       line-height: 1.45;
       margin-top: 9px;
     }
+    .answer-panel {
+      display: grid;
+      gap: 12px;
+    }
+    .answer-context {
+      display: grid;
+      gap: 3px;
+    }
+    .answer-card {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      padding: 14px;
+    }
+    .answer-card b {
+      display: block;
+      color: var(--deep);
+      font-size: 13px;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+    .answer-card strong {
+      display: block;
+      color: var(--ink);
+      font-size: 28px;
+      line-height: 1.08;
+      margin-bottom: 10px;
+    }
+    .answer-card p {
+      font-size: 14px;
+      line-height: 1.48;
+    }
+    .answer-panel .route-note {
+      margin-top: 0;
+    }
     .grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -718,6 +753,9 @@
       .pathway-grid {
         grid-template-columns: 1fr;
       }
+      #detail-panel {
+        order: -1;
+      }
       #map {
         height: 380px;
       }
@@ -793,12 +831,12 @@
 
     <div class="workbench">
       <aside class="journey-rail">
-        <div class="tabs" aria-label="Care pathway stages">
-          <button class="tab active" data-mode="pathway" data-step="01"><span>Who needs care?</span></button>
-          <button class="tab" data-mode="municipality" data-step="02"><span>Can residents reach first contact?</span></button>
-          <button class="tab" data-mode="municipality" data-step="03"><span>Is the facility ready?</span></button>
-          <button class="tab" data-mode="province" data-step="04"><span>Can patients move onward?</span></button>
-          <button class="tab" data-mode="pathway" data-step="05"><span>What must be verified?</span></button>
+        <div class="tabs" aria-label="Patient pathway questions">
+          <button class="tab active" data-question="counting" data-step="01"><span>Is the illness being counted?</span></button>
+          <button class="tab" data-question="basic-care" data-step="02"><span>Can residents get basic care nearby?</span></button>
+          <button class="tab" data-question="payment" data-step="03"><span>Is payment protection clear?</span></button>
+          <button class="tab" data-question="referral" data-step="04"><span>Where should residents be referred?</span></button>
+          <button class="tab" data-question="record" data-step="05"><span>Did the system record the outcome?</span></button>
         </div>
       </aside>
 
@@ -827,22 +865,6 @@
         <div class="map-row">
           <div id="map" role="application" aria-label="BARMM diagnostic map"></div>
           <div class="panel" id="detail-panel"></div>
-        </div>
-      </section>
-
-      <section class="section emphasis">
-        <div class="section-head">
-          <div>
-            <h2>Patient Pathway Model</h2>
-            <p>Select an LGU and test the system as a patient would experience it: counted illness, first contact, payment, referral, and outcome record.</p>
-          </div>
-        </div>
-        <div class="pathway-layout">
-          <div class="panel" id="patient-model"></div>
-          <div class="panel">
-            <h3>Facilities, Hubs, and Areas Needing Confirmation</h3>
-            <div id="facility-network" class="network"></div>
-          </div>
         </div>
       </section>
 
@@ -925,7 +947,7 @@
   <script>
     const colors = { LDS: "#2463a7", MDN: "#23847a", MDS: "#b7791f", SGA: "#b24036", BARMM: "#19324f" };
     const fmt = new Intl.NumberFormat("en-US");
-    let data, map, layer, routeLayer, selectedCode = "BARMM", selectedMunicipalityId = "", mode = "pathway";
+    let data, map, layer, routeLayer, selectedCode = "BARMM", selectedMunicipalityId = "", selectedQuestion = "counting", mode = "pathway";
 
     const number = (value, suffix = "") => {
       if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) return "n.m.";
@@ -968,7 +990,6 @@
       renderPathwaySelector();
       selectedMunicipalityId = document.getElementById("patient-selector").value;
       renderMetrics(data.totals);
-      renderPatientPathway();
       renderMap();
       renderJurisdictionCards();
       renderFindings();
@@ -982,38 +1003,27 @@
         button.addEventListener("click", () => {
           document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
           button.classList.add("active");
-          mode = button.dataset.mode;
-          selectedCode = mode === "province" ? "BARMM" : "";
-          renderPathwaySelector();
-          renderPatientPathway();
-          renderMap();
-          renderTables();
+          selectedQuestion = button.dataset.question;
+          mode = "pathway";
+          renderQuestionAnswer(findMunicipalityById(selectedMunicipalityId) || filteredMunicipalities()[0]);
         });
       });
       document.getElementById("province-filter").addEventListener("change", event => {
         selectedCode = event.target.value;
         renderPathwaySelector();
         selectedMunicipalityId = document.getElementById("patient-selector").value;
-        renderPatientPathway();
         renderMap();
         renderTables();
       });
       document.getElementById("search").addEventListener("input", () => {
-        if (mode === "province") {
-          mode = "pathway";
-          document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.mode === "pathway"));
-        }
         renderPathwaySelector();
         selectedMunicipalityId = document.getElementById("patient-selector").value;
-        renderPatientPathway();
         renderMap();
         renderTables();
       });
       document.getElementById("patient-selector").addEventListener("change", event => {
         selectedMunicipalityId = event.target.value;
         mode = "pathway";
-        document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.mode === "pathway"));
-        renderPatientPathway();
         renderMap();
         renderTables();
       });
@@ -1091,9 +1101,9 @@
           if (mode !== "province") {
             selectedMunicipalityId = municipalityId(row);
             document.getElementById("patient-selector").value = selectedMunicipalityId;
-            renderPatientPathway();
           }
-          renderDetail(row, mode);
+          renderQuestionAnswer(row);
+          drawReferralRoute(row);
           renderJurisdictionCards();
         });
         bounds.push([lat, lon]);
@@ -1102,7 +1112,12 @@
       const selected = mode === "province" && selectedCode !== "BARMM"
         ? data.jurisdictions.find(j => j["Report code"] === selectedCode)
         : findMunicipalityById(selectedMunicipalityId) || filteredMunicipalities()[0];
-      renderDetail(selected, mode);
+      if (selected && mode !== "province") {
+        selectedMunicipalityId = municipalityId(selected);
+        renderQuestionAnswer(selected);
+      } else {
+        renderDetail(selected, mode);
+      }
       if (mode !== "province" && selected) drawReferralRoute(selected);
     }
 
@@ -1153,6 +1168,7 @@
     }
 
     function drawReferralRoute(row) {
+      if (routeLayer) routeLayer.remove();
       routeLayer = L.layerGroup().addTo(map);
       const hub = findMunicipalityById(row.nearest_referral_id);
       if (!hub || !Number(row.centroid_lat) || !Number(row.centroid_lon) || !Number(hub.centroid_lat) || !Number(hub.centroid_lon)) return;
@@ -1173,50 +1189,91 @@
       }).bindPopup(`<strong>Referral hub</strong><br>${esc(hub["Local government unit"])}<br>${number(row.nearest_referral_distance_km, " km")} representative distance`).addTo(routeLayer);
     }
 
-    function renderPatientPathway() {
-      const row = findMunicipalityById(selectedMunicipalityId) || filteredMunicipalities()[0];
-      const model = document.getElementById("patient-model");
-      const network = document.getElementById("facility-network");
+    function renderQuestionAnswer(row) {
+      const panel = document.getElementById("detail-panel");
       if (!row) {
-        model.innerHTML = "<h3>No LGU selected</h3><p>Adjust the filters to show municipal records.</p>";
-        network.innerHTML = "";
+        panel.innerHTML = "<h3>No LGU selected</h3><p>Adjust the filters to show municipal records.</p>";
         return;
       }
       selectedMunicipalityId = municipalityId(row);
+      const answer = questionAnswer(row);
+      panel.innerHTML = `
+        <div class="answer-panel">
+          <div class="answer-context">
+            <span class="badge" style="background:${colors[row.Report]}22;color:${colors[row.Report]}">${esc(row.Report)}</span>
+            <h2>${esc(row["Local government unit"])}</h2>
+            <p>${esc(row["Province / area"])} · ${esc(row.coordinate_precision)}</p>
+          </div>
+          <div class="answer-card">
+            <b>${esc(answer.no)} · ${esc(answer.question)}</b>
+            <strong>${esc(answer.answer)}</strong>
+            <p>${esc(answer.detail)}</p>
+            <span class="status ${answer.state}">${esc(statusLabel(answer.state))}</span>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong>${number(row["Population 2024"])}</strong><span>Residents</span></div>
+            <div class="metric"><strong>${number(row.first_contact_nodes)}</strong><span>First-contact sites</span></div>
+            <div class="metric"><strong>${number(row.unserved_barangays)}</strong><span>Barangays needing local confirmation</span></div>
+            <div class="metric"><strong>${number(row["nearest_referral_distance_km"], " km")}</strong><span>Closest mapped referral</span></div>
+          </div>
+          <div class="network">
+            ${networkRow("P", "Patient signal", `${row.pathway_condition}. ${row.pathway_condition_reason}`)}
+            ${networkRow("F", "Available facilities", basicCareSummary(row))}
+            ${networkRow("R", "Referral point", referralSummary(row))}
+          </div>
+          <p class="route-note">${esc(row.pathway_condition_caveat)} Coordinates are representative and distances are straight-line, not travel-time routing.</p>
+        </div>`;
+    }
+
+    function statusLabel(state) {
+      if (state === "good") return "available";
+      if (state === "watch") return "partial / provisional";
+      return "gap";
+    }
+
+    function questionAnswer(row) {
       const unserved = asNumber(row.unserved_barangays);
       const firstContactNodes = asNumber(row.first_contact_nodes);
-      const unservedStatus = unserved === 0 ? "good" : unserved <= 5 ? "watch" : "gap";
       const basicCareStatus = firstContactNodes === 0 ? "gap" : unserved === 0 ? "good" : "watch";
       const localHub = row.network_id === row.nearest_referral_id;
-      model.innerHTML = `
-        <div class="pathway-header">
-          <div>
-            <span class="badge" style="background:${colors[row.Report]}22;color:${colors[row.Report]}">${esc(row.Report)}</span>
-            <h2>${esc(row["Local government unit"])} Patient Path</h2>
-            <p>A modeled patient presents with <strong>${esc(row.pathway_condition)}</strong>. This is the strongest measured municipal concern in the workbook, not a formal morbidity ranking.</p>
-          </div>
-          <div class="metric"><strong>${number(row["Population 2024"])}</strong><span>Residents</span></div>
-        </div>
-        <div class="flow-line">
-          <span class="flow-node">Patient</span><span>to</span>
-          <span class="flow-node">BHS/RHU</span><span>to</span>
-          <span class="flow-node">${esc(row.nearest_referral_lgu || "referral hub not mapped")}</span><span>to</span>
-          <span class="flow-node">FHSIS / referral record</span>
-        </div>
-        <div class="pathway-grid">
-          ${pathStep("1", "Is the illness being counted?", countingAnswer(row), countingDetail(row), "watch")}
-          ${pathStep("2", "Can residents get basic care nearby?", firstContactNodes > 0 && unserved === 0 ? "Yes, in the current records." : firstContactNodes > 0 ? "Partly." : "No first-contact site is recorded.", firstContactDetail(row), basicCareStatus)}
-          ${pathStep("3", "Is payment protection clear?", row.Report === "SGA" ? "No clear payment pathway yet." : "Not clear at LGU level.", paymentDetail(row), row.Report === "SGA" ? "gap" : "watch")}
-          ${pathStep("4", "Where should residents be referred?", localHub ? "Use the local receiving point, if confirmed." : `Use ${text(row.nearest_referral_lgu)}, if confirmed.`, referralDetail(row), localHub ? "good" : "watch")}
-          ${pathStep("5", "Did the system record the outcome?", "No, not yet.", recordDetail(row), "gap")}
-        </div>
-        <p class="route-note">${esc(row.pathway_condition_caveat)} Coordinates are representative and distances are straight-line, not travel-time routing.</p>`;
-      network.innerHTML = `
-        ${networkRow("B", "Basic-care sites", basicCareSummary(row))}
-        ${networkRow("H", "Hospital / inpatient row", hospitalSummary(row))}
-        ${networkRow("A", "Areas needing local confirmation", areaConfirmationSummary(row))}
-        ${networkRow("R", "Closest mapped referral", referralSummary(row))}
-        ${networkRow("S", "Evidence boundary", row["Basis and caveat"])}`;
+      const answers = {
+        "counting": {
+          no: "1",
+          question: "Is the illness being counted?",
+          answer: countingAnswer(row),
+          detail: countingDetail(row),
+          state: "watch"
+        },
+        "basic-care": {
+          no: "2",
+          question: "Can residents get basic care nearby?",
+          answer: firstContactNodes > 0 && unserved === 0 ? "Yes, in the current records." : firstContactNodes > 0 ? "Partly." : "No first-contact site is recorded.",
+          detail: firstContactDetail(row),
+          state: basicCareStatus
+        },
+        "payment": {
+          no: "3",
+          question: "Is payment protection clear?",
+          answer: row.Report === "SGA" ? "No clear payment pathway yet." : "Not clear at LGU level.",
+          detail: paymentDetail(row),
+          state: row.Report === "SGA" ? "gap" : "watch"
+        },
+        "referral": {
+          no: "4",
+          question: "Where should residents be referred?",
+          answer: localHub ? "Use the local receiving point, if confirmed." : `Use ${text(row.nearest_referral_lgu)}, if confirmed.`,
+          detail: referralDetail(row),
+          state: localHub ? "good" : "watch"
+        },
+        "record": {
+          no: "5",
+          question: "Did the system record the outcome?",
+          answer: "No, not yet.",
+          detail: recordDetail(row),
+          state: "gap"
+        }
+      };
+      return answers[selectedQuestion] || answers.counting;
     }
 
     function countingAnswer(row) {
@@ -1279,15 +1336,6 @@
 
     function recordDetail(row) {
       return `${row.referral_completion_answer} ${row.record_answer}`;
-    }
-
-    function pathStep(no, question, answer, detail, state) {
-      return `<div class="path-step">
-        <b>${esc(no)} · ${esc(question)}</b>
-        <strong>${esc(answer)}</strong>
-        <p>${esc(detail)}</p>
-        <span class="status ${state}">${state === "good" ? "available" : state === "watch" ? "partial / provisional" : "gap"}</span>
-      </div>`;
     }
 
     function networkRow(icon, title, body) {
