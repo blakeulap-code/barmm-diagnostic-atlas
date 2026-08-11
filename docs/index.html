@@ -106,7 +106,7 @@
     }
     .tabs {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 7px;
       margin: 16px 0;
     }
@@ -155,6 +155,9 @@
       border-bottom: 1px solid var(--line);
       background: var(--panel);
     }
+    .section.emphasis {
+      background: #eef4f7;
+    }
     .section-head {
       display: flex;
       justify-content: space-between;
@@ -182,6 +185,109 @@
       box-shadow: var(--shadow);
       padding: 14px;
       min-width: 0;
+    }
+    .pathway-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .pathway-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+    .pathway-header h2 {
+      margin-bottom: 5px;
+    }
+    .pathway-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 9px;
+    }
+    .path-step {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 11px;
+      min-height: 150px;
+    }
+    .path-step b {
+      display: block;
+      color: var(--deep);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .path-step strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1.15;
+      margin-bottom: 7px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .status.good { color: #195a36; background: #e6f3ea; }
+    .status.watch { color: #72500d; background: #fff3c4; }
+    .status.gap { color: #8c2d25; background: #fbe7e4; }
+    .network {
+      display: grid;
+      gap: 9px;
+    }
+    .network-row {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+      border-bottom: 1px solid #e8edf3;
+      padding-bottom: 9px;
+    }
+    .network-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+    .network-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: #e9f1fb;
+      color: var(--deep);
+      font-weight: 900;
+      font-size: 12px;
+    }
+    .flow-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+      margin: 12px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .flow-node {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 7px 9px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 800;
+    }
+    .route-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin-top: 9px;
     }
     .grid {
       display: grid;
@@ -264,6 +370,7 @@
     }
     table {
       width: 100%;
+      min-width: 980px;
       border-collapse: collapse;
       font-size: 12px;
     }
@@ -317,7 +424,7 @@
         border-right: 0;
         border-bottom: 1px solid var(--line);
       }
-      .map-row, .grid, .findings {
+      .map-row, .grid, .findings, .pathway-layout, .pathway-grid {
         grid-template-columns: 1fr;
       }
       #map { height: 440px; }
@@ -327,7 +434,7 @@
       h1 { font-size: 25px; }
       .metrics { grid-template-columns: 1fr; }
       .section-head { display: block; }
-      table { min-width: 680px; }
+      table { min-width: 980px; }
     }
   </style>
 </head>
@@ -336,10 +443,11 @@
     <aside>
       <div class="eyebrow">BRIGHT-BARMM · 2026 diagnostic series</div>
       <h1>BARMM Health Systems Diagnostic Atlas</h1>
-      <p>External-facing findings platform for the four-jurisdiction diagnostic series. Figures are source-linked and caveated where the record remains provisional.</p>
+      <p>External-facing patient-pathway and findings platform for the four-jurisdiction diagnostic series. Figures are source-linked and caveated where the record remains provisional.</p>
       <div class="notice" id="status-note">Loading source limitations...</div>
       <div class="tabs" aria-label="View mode">
-        <button class="tab active" data-mode="province">Jurisdictions</button>
+        <button class="tab active" data-mode="pathway">Pathway</button>
+        <button class="tab" data-mode="province">Jurisdictions</button>
         <button class="tab" data-mode="municipality">Municipalities</button>
       </div>
       <div class="control">
@@ -350,16 +458,36 @@
         <label for="search">Municipality search</label>
         <input id="search" type="search" placeholder="Search municipality..." />
       </div>
+      <div class="control">
+        <label for="patient-selector">Patient pathway LGU</label>
+        <select id="patient-selector"></select>
+      </div>
       <div class="metrics" id="metric-strip"></div>
       <p id="source-line"></p>
     </aside>
 
     <main>
+      <section class="section emphasis">
+        <div class="section-head">
+          <div>
+            <h2>Patient Pathway Model</h2>
+            <p>Select an LGU and test the system as a patient would experience it: counted illness, first contact, payment, referral, and outcome record.</p>
+          </div>
+        </div>
+        <div class="pathway-layout">
+          <div class="panel" id="patient-model"></div>
+          <div class="panel">
+            <h3>Facilities, Hubs, and Unserved Areas</h3>
+            <div id="facility-network" class="network"></div>
+          </div>
+        </div>
+      </section>
+
       <section class="section">
         <div class="section-head">
           <div>
-            <h2>Decision Map</h2>
-            <p>Representative points show diagnostic units. Select a jurisdiction or municipality to inspect the finding, evidence base, and caveats.</p>
+            <h2>Map: First Contact and Referral</h2>
+            <p>Representative points show LGUs and jurisdiction centers. In pathway mode, the line links the selected LGU to the closest mapped municipality with a recorded hospital.</p>
           </div>
           <div class="legend">
             <span><i class="dot" style="background: var(--blue)"></i>LDS</span>
@@ -409,9 +537,12 @@
                 <th>Population</th>
                 <th>Barangays</th>
                 <th>RHUs</th>
+                <th>BHS</th>
+                <th>Hospitals</th>
                 <th>RHU gap</th>
-                <th>Coverage</th>
-                <th>Beds / 1k</th>
+                <th>Unserved barangays</th>
+                <th>Top measured concern</th>
+                <th>Closest referral LGU</th>
               </tr>
             </thead>
             <tbody id="municipal-table"></tbody>
@@ -468,7 +599,7 @@
   <script>
     const colors = { LDS: "#2463a7", MDN: "#23847a", MDS: "#b7791f", SGA: "#b24036", BARMM: "#19324f" };
     const fmt = new Intl.NumberFormat("en-US");
-    let data, map, layer, selectedCode = "BARMM", mode = "province";
+    let data, map, layer, routeLayer, selectedCode = "BARMM", selectedMunicipalityId = "", mode = "pathway";
 
     const number = (value, suffix = "") => {
       if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) return "n.m.";
@@ -480,6 +611,15 @@
     };
     const text = (value) => value === null || value === undefined || value === "" ? "Not measured" : String(value);
     const esc = (value) => String(value ?? "").replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
+    const municipalityId = (row) => row ? `${row.Report}::${row.municipality_key}` : "";
+    const findMunicipalityById = (id) => data.municipalities.find(row => municipalityId(row) === id);
+    const statusClass = (value, good, watch) => {
+      const n = Number(value);
+      if (Number.isNaN(n)) return "watch";
+      if (n >= good) return "good";
+      if (n >= watch) return "watch";
+      return "gap";
+    };
 
     fetch("assets/data/platform_data.json")
       .then(response => response.json())
@@ -493,7 +633,10 @@
       document.getElementById("source-line").innerHTML = `<a href="${data.metadata.source_workbook_url}" target="_blank" rel="noreferrer">Source workbook</a> · <a href="${data.metadata.drive_folder_url}" target="_blank" rel="noreferrer">Drive folder</a>`;
       document.getElementById("footer").textContent = `Built from ${data.metadata.source_workbook}. Last generated ${data.metadata.built_at}. Representative coordinates are for map orientation only.`;
       renderFilters();
+      renderPathwaySelector();
+      selectedMunicipalityId = document.getElementById("patient-selector").value;
       renderMetrics(data.totals);
+      renderPatientPathway();
       renderMap();
       renderJurisdictionCards();
       renderFindings();
@@ -509,20 +652,36 @@
           button.classList.add("active");
           mode = button.dataset.mode;
           selectedCode = mode === "province" ? "BARMM" : "";
+          renderPathwaySelector();
+          renderPatientPathway();
           renderMap();
           renderTables();
         });
       });
       document.getElementById("province-filter").addEventListener("change", event => {
         selectedCode = event.target.value;
+        renderPathwaySelector();
+        selectedMunicipalityId = document.getElementById("patient-selector").value;
+        renderPatientPathway();
         renderMap();
         renderTables();
       });
       document.getElementById("search").addEventListener("input", () => {
-        if (mode !== "municipality") {
-          mode = "municipality";
-          document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.mode === "municipality"));
+        if (mode === "province") {
+          mode = "pathway";
+          document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.mode === "pathway"));
         }
+        renderPathwaySelector();
+        selectedMunicipalityId = document.getElementById("patient-selector").value;
+        renderPatientPathway();
+        renderMap();
+        renderTables();
+      });
+      document.getElementById("patient-selector").addEventListener("change", event => {
+        selectedMunicipalityId = event.target.value;
+        mode = "pathway";
+        document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.mode === "pathway"));
+        renderPatientPathway();
         renderMap();
         renderTables();
       });
@@ -533,6 +692,17 @@
       const options = [`<option value="BARMM">All four jurisdictions</option>`]
         .concat(data.jurisdictions.filter(j => j["Report code"] !== "BARMM").map(j => `<option value="${esc(j["Report code"])}">${esc(j.Jurisdiction)}</option>`));
       select.innerHTML = options.join("");
+    }
+
+    function renderPathwaySelector() {
+      const select = document.getElementById("patient-selector");
+      const rows = filteredMunicipalities();
+      select.innerHTML = rows.map(row => `<option value="${esc(municipalityId(row))}">${esc(row["Local government unit"])} · ${esc(row.Report)}</option>`).join("");
+      if (rows.length && !rows.some(row => municipalityId(row) === selectedMunicipalityId)) {
+        const routed = rows.find(row => row.nearest_referral_id && row.nearest_referral_id !== row.network_id);
+        selectedMunicipalityId = municipalityId(routed || rows[0]);
+      }
+      if (selectedMunicipalityId) select.value = selectedMunicipalityId;
     }
 
     function renderMetrics(t) {
@@ -565,6 +735,7 @@
         }).addTo(map);
       }
       if (layer) layer.remove();
+      if (routeLayer) routeLayer.remove();
       layer = L.layerGroup().addTo(map);
       const rows = mode === "province"
         ? data.jurisdictions.filter(j => j["Report code"] !== "BARMM" && Number(j.centroid_lat))
@@ -574,16 +745,22 @@
         const code = row["Report code"] || row.Report;
         const lat = Number(row.centroid_lat);
         const lon = Number(row.centroid_lon);
+        const selectedMunicipality = mode !== "province" && municipalityId(row) === selectedMunicipalityId;
         const marker = L.circleMarker([lat, lon], {
-          radius: mode === "province" ? 12 : 7,
+          radius: mode === "province" ? 12 : (selectedMunicipality ? 10 : 7),
           color: "#fff",
-          weight: 2,
+          weight: selectedMunicipality ? 3 : 2,
           fillColor: colors[code] || "#607080",
           fillOpacity: 0.9
         }).addTo(layer);
         marker.bindPopup(popupHtml(row, mode));
         marker.on("click", () => {
           selectedCode = mode === "province" ? code : row["Local government unit"];
+          if (mode !== "province") {
+            selectedMunicipalityId = municipalityId(row);
+            document.getElementById("patient-selector").value = selectedMunicipalityId;
+            renderPatientPathway();
+          }
           renderDetail(row, mode);
           renderJurisdictionCards();
         });
@@ -592,10 +769,9 @@
       if (bounds.length) map.fitBounds(bounds, { padding: [28, 28], maxZoom: mode === "province" ? 8 : 10 });
       const selected = mode === "province" && selectedCode !== "BARMM"
         ? data.jurisdictions.find(j => j["Report code"] === selectedCode)
-        : mode === "municipality"
-          ? filteredMunicipalities()[0]
-          : data.jurisdictions.find(j => j["Report code"] === "LDS");
+        : findMunicipalityById(selectedMunicipalityId) || filteredMunicipalities()[0];
       renderDetail(selected, mode);
+      if (mode !== "province" && selected) drawReferralRoute(selected);
     }
 
     function popupHtml(row, rowMode) {
@@ -633,13 +809,97 @@
           <p>${esc(row["Province / area"])} · ${esc(row.coordinate_precision)}</p>
           <div class="metrics">
             <div class="metric"><strong>${number(row["Population 2024"])}</strong><span>Residents</span></div>
-            <div class="metric"><strong>${number(row["Barangays (as annexed)"])}</strong><span>Barangays</span></div>
-            <div class="metric"><strong>${number(row["Rural health units (as annexed)"])}</strong><span>RHUs held</span></div>
-            <div class="metric"><strong>${pct(row["LIVE  Barangay coverage share"])}</strong><span>Barangay coverage</span></div>
+            <div class="metric"><strong>${number(row.first_contact_nodes)}</strong><span>First-contact nodes</span></div>
+            <div class="metric"><strong>${number(row.unserved_barangays)}</strong><span>Unserved barangays</span></div>
+            <div class="metric"><strong>${number(row["nearest_referral_distance_km"], " km")}</strong><span>Closest mapped referral</span></div>
           </div>
+          <h3>Modeled patient concern</h3>
+          <p>${esc(row.pathway_condition)}. ${esc(row.pathway_condition_reason)}</p>
           <h3>Evidence note</h3>
           <p>${esc(row["Basis and caveat"])}</p>`;
       }
+    }
+
+    function drawReferralRoute(row) {
+      routeLayer = L.layerGroup().addTo(map);
+      const hub = findMunicipalityById(row.nearest_referral_id);
+      if (!hub || !Number(row.centroid_lat) || !Number(row.centroid_lon) || !Number(hub.centroid_lat) || !Number(hub.centroid_lon)) return;
+      const start = [Number(row.centroid_lat), Number(row.centroid_lon)];
+      const end = [Number(hub.centroid_lat), Number(hub.centroid_lon)];
+      L.polyline([start, end], {
+        color: colors[row.Report] || "#19324f",
+        weight: 3,
+        opacity: 0.75,
+        dashArray: row.network_id === row.nearest_referral_id ? "2 8" : "8 7"
+      }).addTo(routeLayer);
+      L.circleMarker(end, {
+        radius: 11,
+        color: colors[hub.Report] || "#19324f",
+        weight: 3,
+        fillColor: "#fff",
+        fillOpacity: 0.9
+      }).bindPopup(`<strong>Referral hub</strong><br>${esc(hub["Local government unit"])}<br>${number(row.nearest_referral_distance_km, " km")} representative distance`).addTo(routeLayer);
+    }
+
+    function renderPatientPathway() {
+      const row = findMunicipalityById(selectedMunicipalityId) || filteredMunicipalities()[0];
+      const model = document.getElementById("patient-model");
+      const network = document.getElementById("facility-network");
+      if (!row) {
+        model.innerHTML = "<h3>No LGU selected</h3><p>Adjust the filters to show municipal records.</p>";
+        network.innerHTML = "";
+        return;
+      }
+      selectedMunicipalityId = municipalityId(row);
+      const coverage = Number(row["LIVE  Barangay coverage share"]);
+      const coverageStatus = statusClass(coverage, 0.75, 0.35);
+      const unservedStatus = Number(row.unserved_barangays || 0) === 0 ? "good" : Number(row.unserved_barangays || 0) <= 5 ? "watch" : "gap";
+      const localHub = row.network_id === row.nearest_referral_id;
+      model.innerHTML = `
+        <div class="pathway-header">
+          <div>
+            <span class="badge" style="background:${colors[row.Report]}22;color:${colors[row.Report]}">${esc(row.Report)}</span>
+            <h2>${esc(row["Local government unit"])} Patient Path</h2>
+            <p>A modeled patient presents with <strong>${esc(row.pathway_condition)}</strong>. This is the strongest measured municipal concern in the workbook, not a formal morbidity ranking.</p>
+          </div>
+          <div class="metric"><strong>${number(row["Population 2024"])}</strong><span>Residents</span></div>
+        </div>
+        <div class="flow-line">
+          <span class="flow-node">Patient</span><span>to</span>
+          <span class="flow-node">BHS/RHU</span><span>to</span>
+          <span class="flow-node">${esc(row.nearest_referral_lgu || "referral hub not mapped")}</span><span>to</span>
+          <span class="flow-node">FHSIS / referral record</span>
+        </div>
+        <div class="pathway-grid">
+          ${pathStep("1", "Is anyone counting what I have?", row.pathway_counting_metric, row.pathway_condition_reason, "watch")}
+          ${pathStep("2", "Is there anywhere to go?", `${number(row.first_contact_nodes)} first-contact nodes`, row.first_contact_answer, coverageStatus)}
+          ${pathStep("3", "Will I be charged?", row.Report === "SGA" ? "Entitlement unresolved" : "Payment not LGU-traceable", row.payment_answer, row.Report === "SGA" ? "gap" : "watch")}
+          ${pathStep("4", "Where do I go next?", localHub ? "Local receiving point" : text(row.nearest_referral_lgu), row.referral_answer, localHub ? "good" : "watch")}
+          ${pathStep("5", "Does the system know what happened?", "Referral outcome not measured", `${row.referral_completion_answer} ${row.record_answer}`, "gap")}
+        </div>
+        <p class="route-note">${esc(row.pathway_condition_caveat)} Coordinates are representative and distances are straight-line, not travel-time routing.</p>`;
+      network.innerHTML = `
+        ${networkRow("N", "First-contact nodes", `${number(row.first_contact_nodes)} total: ${number(row["Rural health units (as annexed)"])} RHUs and ${number(row["Barangay health stations"])} BHS.`)}
+        ${networkRow("H", "Hubs / inpatient points", `${number(row.Hospitals)} hospitals recorded; ${number(row["Licensed beds"])} licensed beds in the municipal row.`)}
+        ${networkRow("U", "Unserved barangays", `${number(row.unserved_barangays)} barangays have no matched first-contact facility.`, unservedStatus)}
+        ${networkRow("R", "Closest mapped referral", `${esc(row.nearest_referral_lgu || "Not mapped")} · ${number(row.nearest_referral_distance_km, " km")} representative distance.`)}
+        ${networkRow("S", "Source caveat", esc(row["Basis and caveat"]))}`;
+    }
+
+    function pathStep(no, question, answer, detail, state) {
+      return `<div class="path-step">
+        <b>${esc(no)} · ${esc(question)}</b>
+        <strong>${esc(answer)}</strong>
+        <p>${esc(detail)}</p>
+        <span class="status ${state}">${state === "good" ? "available" : state === "watch" ? "partial / provisional" : "gap"}</span>
+      </div>`;
+    }
+
+    function networkRow(icon, title, body) {
+      return `<div class="network-row">
+        <div class="network-icon">${esc(icon)}</div>
+        <div><h3>${esc(title)}</h3><p>${body}</p></div>
+      </div>`;
     }
 
     function renderJurisdictionCards() {
@@ -677,9 +937,12 @@
           <td>${number(row["Population 2024"])}</td>
           <td>${number(row["Barangays (as annexed)"])}</td>
           <td>${number(row["Rural health units (as annexed)"])}</td>
+          <td>${number(row["Barangay health stations"])}</td>
+          <td>${number(row.Hospitals)}</td>
           <td>${number(row["LIVE  RHU shortfall (rounded up)"])}</td>
-          <td>${pct(row["LIVE  Barangay coverage share"])}</td>
-          <td>${number(row["LIVE  Beds per 1,000 residents"])}</td>
+          <td>${number(row.unserved_barangays)}</td>
+          <td>${esc(row.pathway_condition)}<br><span>${esc(row.pathway_counting_metric)}</span></td>
+          <td>${esc(row.nearest_referral_lgu || "Not mapped")}<br><span>${number(row.nearest_referral_distance_km, " km")} representative</span></td>
         </tr>`).join("");
     }
 
