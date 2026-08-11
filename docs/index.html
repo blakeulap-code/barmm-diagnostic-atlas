@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BARMM Health Systems Diagnostic Atlas</title>
+  <title>BARMM Local Health Systems Diagnostic Atlas</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2319324f'/%3E%3Ctext x='32' y='41' font-family='Arial' font-size='28' font-weight='700' text-anchor='middle' fill='white'%3EB%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://unpkg.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -442,8 +442,8 @@
   <div class="shell">
     <aside>
       <div class="eyebrow">BRIGHT-BARMM · 2026 diagnostic series</div>
-      <h1>BARMM Health Systems Diagnostic Atlas</h1>
-      <p>External-facing patient-pathway and findings platform for the four-jurisdiction diagnostic series. Figures are source-linked and caveated where the record remains provisional.</p>
+      <h1>BARMM Local Health Systems Diagnostic Atlas</h1>
+      <p>Evidence for UHC Action in Four Priority Jurisdictions. Figures are source-linked and caveated where the record remains provisional.</p>
       <div class="notice" id="status-note">Loading source limitations...</div>
       <div class="tabs" aria-label="View mode">
         <button class="tab active" data-mode="pathway">Pathway</button>
@@ -553,25 +553,6 @@
       <section class="section">
         <div class="section-head">
           <div>
-            <h2>Evidence Gaps and QA Flags</h2>
-            <p>The platform keeps unresolved issues visible because they condition allocation, procurement, costing, and publication.</p>
-          </div>
-        </div>
-        <div class="map-row">
-          <div class="panel">
-            <h3>Highest-consequence evidence gaps</h3>
-            <div class="list" id="gaps"></div>
-          </div>
-          <div class="panel">
-            <h3>Open QA flags</h3>
-            <div class="list" id="qa"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="section-head">
-          <div>
             <h2>Source Register</h2>
             <p>All source reports are Google Docs exports captured in the consolidated workbook.</p>
           </div>
@@ -641,7 +622,7 @@
       renderJurisdictionCards();
       renderFindings();
       renderTables();
-      renderEvidence();
+      renderSources();
       bindEvents();
     }
 
@@ -946,17 +927,7 @@
         </tr>`).join("");
     }
 
-    function renderEvidence() {
-      document.getElementById("gaps").innerHTML = data.evidence_gaps.slice(0, 14).map(g => `
-        <div class="item">
-          <strong>${esc(g.number)}. ${esc(g.gap)}</strong>
-          <span>${esc(g.why_it_binds)}</span>
-        </div>`).join("");
-      document.getElementById("qa").innerHTML = data.qa_flags.slice(0, 20).map(q => `
-        <div class="item">
-          <strong>${esc(q.Class)} · ${esc(q["Report(s)"])}</strong>
-          <span>${esc(q.Finding)}</span>
-        </div>`).join("");
+    function renderSources() {
       document.getElementById("sources").innerHTML = data.sources.map(s => `
         <tr>
           <td>${esc(s.Code)}</td>

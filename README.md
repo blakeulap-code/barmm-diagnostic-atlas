@@ -1,16 +1,17 @@
-# BARMM Health Systems Diagnostic Atlas
+# BARMM Local Health Systems Diagnostic Atlas
 
-BARMM Health Systems Diagnostic Atlas is a shareable, map-first findings
-platform for the 2026 BRIGHT-BARMM health-systems diagnostic series. The GitHub
-Pages version is designed for external leaders and preserves the reports'
-provisional status, denominator caveats, and open QA flags.
+BARMM Local Health Systems Diagnostic Atlas is a shareable, map-first findings
+platform for evidence-informed UHC action in four priority jurisdictions. The
+GitHub Pages version is designed for external leaders and preserves the reports'
+provisional status and denominator caveats without exposing internal QA working
+registers.
 
 ## What is included
 
 - Interactive jurisdiction and municipal map
 - Regional findings and four jurisdiction constraint cards
 - Municipal drilldown from the consolidated diagnostic workbook
-- Evidence-gap and QA panels
+- Patient-pathway model for LGU-level service questions
 - Source register with links to the five Google Docs reports
 - Generated CSV/JSON runtime artifacts for GitHub Pages
 
@@ -48,7 +49,6 @@ The app runs on `http://localhost:8501` by default.
 The repository includes:
 
 - `docs/` for the public GitHub Pages platform
-- `.github/workflows/pages.yml` for Pages deployment
 - `scripts/build_diagnostic_platform.py` for source-to-runtime generation
 - `Dockerfile` and `render.yaml` for the internal Streamlit deployment path
 

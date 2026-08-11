@@ -78,8 +78,8 @@ REGIONAL_FINDINGS = [
     },
     {
         "title": "The pipeline output is not an allocation basis yet",
-        "body": "The consolidated evidence product carries unresolved data-build issues across all four jurisdictions, and the platform keeps those flags visible.",
-        "locator": "BARMM report, finding 3; 90_QA_Flags",
+        "body": "The consolidated evidence product remains provisional across all four jurisdictions; validation must precede allocation, procurement, or costing.",
+        "locator": "BARMM report, finding 3; source register status declarations",
     },
     {
         "title": "First contact is a jurisdiction-specific gradient",
@@ -447,7 +447,6 @@ def build() -> None:
         "rhus_held": int(regional["LIVE  Sum of LGU rows.2"].sum()),
         "rhus_implied": int(regional["RHUs implied as printed (Regional Table 4)"].sum()),
         "referral_completion_observations": 0,
-        "qa_flags_open": int(qa_flags["Status"].astype(str).str.contains("Open", case=False, na=False).sum()),
     }
     if totals != {
         "lgus": 84,
@@ -457,19 +456,18 @@ def build() -> None:
         "rhus_held": 89,
         "rhus_implied": 157,
         "referral_completion_observations": 0,
-        "qa_flags_open": totals["qa_flags_open"],
     }:
         raise ValueError(f"Unexpected denominator check: {totals}")
 
     platform = {
         "metadata": {
-            "title": "BARMM Health Systems Diagnostic Atlas",
-            "subtitle": "Interactive findings platform for the 2026 BRIGHT-BARMM health-systems diagnostic series.",
+            "title": "BARMM Local Health Systems Diagnostic Atlas",
+            "subtitle": "Evidence for UHC Action in Four Priority Jurisdictions",
             "source_workbook": SOURCE_XLSX.name,
             "source_workbook_url": "https://docs.google.com/spreadsheets/d/1lbx97k43fZVXFIpayd1_vY0BftZ4st9S9_C6sVewYeo/edit",
             "drive_folder_url": "https://drive.google.com/drive/folders/1UpMs323gPKlaMpQ1WvpAKnvM6RL6C9yb",
             "built_at": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
-            "status_note": "All five reports declare provisional status. Figures are for diagnostic review and should not be used for allocation, procurement, or costing until identified QA flags are closed.",
+            "status_note": "Evidence status: provisional baseline. Figures are for diagnostic review and UHC action planning; they should not be used for allocation, procurement, or costing until validation is complete.",
         },
         "totals": totals,
         "findings": REGIONAL_FINDINGS,
@@ -479,13 +477,22 @@ def build() -> None:
         "qa_flags": records(qa_flags),
         "evidence_gaps": records(evidence_gaps),
     }
+    public_platform = {
+        key: value
+        for key, value in platform.items()
+        if key not in {"qa_flags", "evidence_gaps"}
+    }
 
     (OUTPUT_DIR / "platform_metadata.json").write_text(
         json.dumps(platform["metadata"], indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    for target in [OUTPUT_DIR / "platform_data.json", DOCS_DATA_DIR / "platform_data.json"]:
-        target.write_text(json.dumps(platform, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    (OUTPUT_DIR / "platform_data.json").write_text(
+        json.dumps(platform, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
+    (DOCS_DATA_DIR / "platform_data.json").write_text(
+        json.dumps(public_platform, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
 
     print(f"Built diagnostic platform data in {OUTPUT_DIR}")
     print(f"Copied GitHub Pages data to {DOCS_DATA_DIR}")
