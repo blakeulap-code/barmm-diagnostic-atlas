@@ -477,7 +477,7 @@
         <div class="pathway-layout">
           <div class="panel" id="patient-model"></div>
           <div class="panel">
-            <h3>Facilities, Hubs, and Unserved Areas</h3>
+            <h3>Facilities, Hubs, and Areas Needing Confirmation</h3>
             <div id="facility-network" class="network"></div>
           </div>
         </div>
@@ -540,7 +540,7 @@
                 <th>BHS</th>
                 <th>Hospitals</th>
                 <th>RHU gap</th>
-                <th>Unserved barangays</th>
+                <th>Barangays without matched site</th>
                 <th>Top measured concern</th>
                 <th>Closest referral LGU</th>
               </tr>
@@ -594,14 +594,20 @@
     const esc = (value) => String(value ?? "").replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
     const municipalityId = (row) => row ? `${row.Report}::${row.municipality_key}` : "";
     const findMunicipalityById = (id) => data.municipalities.find(row => municipalityId(row) === id);
-    const statusClass = (value, good, watch) => {
-      const n = Number(value);
-      if (Number.isNaN(n)) return "watch";
-      if (n >= good) return "good";
-      if (n >= watch) return "watch";
-      return "gap";
+    const asNumber = (value) => {
+      if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) return 0;
+      return Number(value);
     };
-
+    const countPhrase = (value, singular, plural) => {
+      const n = asNumber(value);
+      const label = n === 1 ? singular : (plural || `${singular}s`);
+      return `${fmt.format(n)} ${label}`;
+    };
+    const sentenceCountPhrase = (value, singular, plural) => {
+      const n = asNumber(value);
+      if (n === 1) return `One ${singular}`;
+      return `${fmt.format(n)} ${plural || `${singular}s`}`;
+    };
     fetch("assets/data/platform_data.json")
       .then(response => response.json())
       .then(payload => {
@@ -791,7 +797,7 @@
           <div class="metrics">
             <div class="metric"><strong>${number(row["Population 2024"])}</strong><span>Residents</span></div>
             <div class="metric"><strong>${number(row.first_contact_nodes)}</strong><span>First-contact nodes</span></div>
-            <div class="metric"><strong>${number(row.unserved_barangays)}</strong><span>Unserved barangays</span></div>
+            <div class="metric"><strong>${number(row.unserved_barangays)}</strong><span>Barangays without matched site</span></div>
             <div class="metric"><strong>${number(row["nearest_referral_distance_km"], " km")}</strong><span>Closest mapped referral</span></div>
           </div>
           <h3>Modeled patient concern</h3>
@@ -832,9 +838,10 @@
         return;
       }
       selectedMunicipalityId = municipalityId(row);
-      const coverage = Number(row["LIVE  Barangay coverage share"]);
-      const coverageStatus = statusClass(coverage, 0.75, 0.35);
-      const unservedStatus = Number(row.unserved_barangays || 0) === 0 ? "good" : Number(row.unserved_barangays || 0) <= 5 ? "watch" : "gap";
+      const unserved = asNumber(row.unserved_barangays);
+      const firstContactNodes = asNumber(row.first_contact_nodes);
+      const unservedStatus = unserved === 0 ? "good" : unserved <= 5 ? "watch" : "gap";
+      const basicCareStatus = firstContactNodes === 0 ? "gap" : unserved === 0 ? "good" : "watch";
       const localHub = row.network_id === row.nearest_referral_id;
       model.innerHTML = `
         <div class="pathway-header">
@@ -852,19 +859,81 @@
           <span class="flow-node">FHSIS / referral record</span>
         </div>
         <div class="pathway-grid">
-          ${pathStep("1", "Is anyone counting what I have?", row.pathway_counting_metric, row.pathway_condition_reason, "watch")}
-          ${pathStep("2", "Is there anywhere to go?", `${number(row.first_contact_nodes)} first-contact nodes`, row.first_contact_answer, coverageStatus)}
-          ${pathStep("3", "Will I be charged?", row.Report === "SGA" ? "Entitlement unresolved" : "Payment not LGU-traceable", row.payment_answer, row.Report === "SGA" ? "gap" : "watch")}
-          ${pathStep("4", "Where do I go next?", localHub ? "Local receiving point" : text(row.nearest_referral_lgu), row.referral_answer, localHub ? "good" : "watch")}
-          ${pathStep("5", "Does the system know what happened?", "Referral outcome not measured", `${row.referral_completion_answer} ${row.record_answer}`, "gap")}
+          ${pathStep("1", "Is the illness being counted?", countingAnswer(row), countingDetail(row), "watch")}
+          ${pathStep("2", "Can residents get basic care nearby?", firstContactNodes > 0 && unserved === 0 ? "Yes, in the current records." : firstContactNodes > 0 ? "Partly." : "No first-contact site is recorded.", firstContactDetail(row), basicCareStatus)}
+          ${pathStep("3", "Is payment protection clear?", row.Report === "SGA" ? "No clear payment pathway yet." : "Not clear at LGU level.", paymentDetail(row), row.Report === "SGA" ? "gap" : "watch")}
+          ${pathStep("4", "Where should residents be referred?", localHub ? "Use the local receiving point, if confirmed." : `Use ${text(row.nearest_referral_lgu)}, if confirmed.`, referralDetail(row), localHub ? "good" : "watch")}
+          ${pathStep("5", "Did the system record the outcome?", "No, not yet.", recordDetail(row), "gap")}
         </div>
         <p class="route-note">${esc(row.pathway_condition_caveat)} Coordinates are representative and distances are straight-line, not travel-time routing.</p>`;
       network.innerHTML = `
-        ${networkRow("N", "First-contact nodes", `${number(row.first_contact_nodes)} total: ${number(row["Rural health units (as annexed)"])} RHUs and ${number(row["Barangay health stations"])} BHS.`)}
-        ${networkRow("H", "Hubs / inpatient points", `${number(row.Hospitals)} hospitals recorded; ${number(row["Licensed beds"])} licensed beds in the municipal row.`)}
-        ${networkRow("U", "Unserved barangays", `${number(row.unserved_barangays)} barangays have no matched first-contact facility.`, unservedStatus)}
-        ${networkRow("R", "Closest mapped referral", `${esc(row.nearest_referral_lgu || "Not mapped")} · ${number(row.nearest_referral_distance_km, " km")} representative distance.`)}
-        ${networkRow("S", "Source caveat", esc(row["Basis and caveat"]))}`;
+        ${networkRow("B", "Basic-care sites", basicCareSummary(row))}
+        ${networkRow("H", "Hospital / inpatient row", hospitalSummary(row))}
+        ${networkRow("A", "Areas needing local confirmation", areaConfirmationSummary(row))}
+        ${networkRow("R", "Closest mapped referral", referralSummary(row))}
+        ${networkRow("S", "Evidence boundary", row["Basis and caveat"])}`;
+    }
+
+    function countingAnswer(row) {
+      if (!row.pathway_counting_metric || row.pathway_counting_metric === "No municipal illness indicator") {
+        return "No LGU illness signal is available.";
+      }
+      return "Partly.";
+    }
+
+    function countingDetail(row) {
+      if (!row.pathway_counting_metric || row.pathway_counting_metric === "No municipal illness indicator") {
+        return "The consolidated workbook does not contain a municipal illness signal for this LGU. A local morbidity, FHSIS, PhilPEN, NTP, or disease-surveillance record would be needed.";
+      }
+      return `The best available municipal signal is ${row.pathway_counting_metric}. ${row.pathway_condition_reason} This is a planning signal, not a confirmed count of patients with that illness.`;
+    }
+
+    function basicCareSummary(row) {
+      return `The current records show ${countPhrase(row.first_contact_nodes, "place")} for a resident's first health visit: ${countPhrase(row["Rural health units (as annexed)"], "Rural Health Unit")} and ${countPhrase(row["Barangay health stations"], "Barangay Health Station")}.`;
+    }
+
+    function areaConfirmationSummary(row) {
+      const unserved = asNumber(row.unserved_barangays);
+      if (unserved === 0) {
+        return "Every barangay in this municipal row has a matched first-contact facility in the current records. Local validation should still confirm whether those sites are open, staffed, and reachable.";
+      }
+      return `${sentenceCountPhrase(unserved, "barangay")} ${unserved === 1 ? "has" : "have"} no facility matched to ${unserved === 1 ? "it" : "them"} in the current records. Residents may need to use a nearby barangay, rely on outreach services, or use another local arrangement. The workbook does not name the affected barangay or give travel time, so this must be confirmed locally.`;
+    }
+
+    function firstContactDetail(row) {
+      return `${basicCareSummary(row)} ${areaConfirmationSummary(row)}`;
+    }
+
+    function hospitalSummary(row) {
+      const hospitals = asNumber(row.Hospitals);
+      const beds = row["Licensed beds"];
+      if (hospitals === 0 && (beds === null || beds === undefined || beds === "" || Number.isNaN(Number(beds)))) {
+        return "The municipal row records no hospital, and licensed beds are not measured in this row.";
+      }
+      if (hospitals === 0) {
+        return `The municipal row records no hospital and ${countPhrase(beds, "licensed bed")} in this row.`;
+      }
+      return `The municipal row records ${countPhrase(hospitals, "hospital")} and ${countPhrase(beds, "licensed bed")}.`;
+    }
+
+    function referralSummary(row) {
+      if (!row.nearest_referral_lgu) return "No referral municipality could be mapped from the available coordinates.";
+      if (row.network_id === row.nearest_referral_id) {
+        return `${row.nearest_referral_lgu} is the local mapped receiving municipality. This does not confirm licensure, admission capacity, or an active referral protocol.`;
+      }
+      return `${row.nearest_referral_lgu} is the closest mapped municipality with a recorded hospital, about ${number(row.nearest_referral_distance_km, " km")} away by straight-line representative distance. This is not a travel-time route and must be checked locally.`;
+    }
+
+    function referralDetail(row) {
+      return referralSummary(row);
+    }
+
+    function paymentDetail(row) {
+      return `${row.payment_answer} The workbook does not show whether this individual patient would be charged at the point of care.`;
+    }
+
+    function recordDetail(row) {
+      return `${row.referral_completion_answer} ${row.record_answer}`;
     }
 
     function pathStep(no, question, answer, detail, state) {
@@ -879,7 +948,7 @@
     function networkRow(icon, title, body) {
       return `<div class="network-row">
         <div class="network-icon">${esc(icon)}</div>
-        <div><h3>${esc(title)}</h3><p>${body}</p></div>
+        <div><h3>${esc(title)}</h3><p>${esc(body)}</p></div>
       </div>`;
     }
 

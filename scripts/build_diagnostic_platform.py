@@ -133,6 +133,20 @@ def clean_number(value: Any) -> Any:
     return value
 
 
+def count_phrase(value: Any, singular: str, plural: str | None = None) -> str:
+    count = clean_number(value) or 0
+    label = singular if count == 1 else (plural or f"{singular}s")
+    return f"{count} {label}"
+
+
+def sentence_count_phrase(value: Any, singular: str, plural: str | None = None) -> str:
+    count = clean_number(value) or 0
+    if count == 1:
+        return f"One {singular}"
+    label = plural or f"{singular}s"
+    return f"{count} {label}"
+
+
 def write_csv(df: pd.DataFrame, name: str) -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUTPUT_DIR / name, index=False)
@@ -248,6 +262,26 @@ def pathway_condition(row: pd.Series) -> dict[str, str]:
         "pathway_counting_metric": metric,
         "pathway_condition_caveat": caveat,
     }
+
+
+def first_contact_answer(row: pd.Series) -> str:
+    unserved = clean_number(row["unserved_barangays"]) or 0
+    opening = (
+        f"The current records show {count_phrase(row['first_contact_nodes'], 'place')} for a resident's first health visit: "
+        f"{count_phrase(row['Rural health units (as annexed)'], 'Rural Health Unit')} and "
+        f"{count_phrase(row['Barangay health stations'], 'Barangay Health Station')}."
+    )
+    if unserved == 0:
+        return (
+            f"{opening} Every barangay in this municipal row has a matched first-contact facility in the current records; "
+            "local validation should still confirm operating status, staffing, and practical accessibility."
+        )
+    return (
+        f"{opening} {sentence_count_phrase(unserved, 'barangay')} "
+        f"{'has' if unserved == 1 else 'have'} no facility matched to "
+        f"{'it' if unserved == 1 else 'them'} in the current source layer. Residents may need to use a nearby barangay, outreach services, "
+        "or another local arrangement; this must be confirmed locally."
+    )
 
 
 def extract_table_block(sheet: str, marker: str, columns: list[str], width: int) -> pd.DataFrame:
@@ -369,15 +403,7 @@ def build() -> None:
         - municipalities.loc[missing_unserved, "LIVE  Barangays with a facility"].fillna(0)
     )
     municipalities["unserved_barangays"] = municipalities["unserved_barangays"].clip(lower=0)
-    municipalities["first_contact_answer"] = municipalities.apply(
-        lambda row: (
-            f"{int(row['first_contact_nodes'])} first-contact nodes are recorded "
-            f"({clean_number(row['Rural health units (as annexed)']) or 0} RHUs and "
-            f"{clean_number(row['Barangay health stations']) or 0} BHS). "
-            f"{clean_number(row['unserved_barangays']) or 0} barangays have no matched first-contact facility in the source layer."
-        ),
-        axis=1,
-    )
+    municipalities["first_contact_answer"] = municipalities.apply(first_contact_answer, axis=1)
 
     hub_rows = municipalities[
         municipalities["Hospitals"].fillna(0).astype(float).gt(0)
@@ -406,9 +432,9 @@ def build() -> None:
             municipalities.at[idx, "nearest_referral_report"] = best["report"]
             municipalities.at[idx, "nearest_referral_distance_km"] = best["distance"]
             municipalities.at[idx, "referral_answer"] = (
-                "Local hospital/inpatient receiving point is recorded."
+                "If the case needs inpatient care, the municipal row records a local hospital or inpatient receiving point. This does not confirm licensure, referral protocol, or actual admission."
                 if best["local"]
-                else f"Closest mapped municipality with a recorded hospital is {best['name']} ({best['distance']} km straight-line, representative-point distance)."
+                else f"If the case needs care beyond first contact, the closest mapped municipality with a recorded hospital is {best['name']}, about {best['distance']} km away by straight-line representative distance. This is not a travel-time route and must be checked against the local referral network."
             )
         else:
             municipalities.at[idx, "referral_answer"] = "No mapped referral hub could be computed from available representative coordinates."
