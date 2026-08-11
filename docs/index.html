@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BARMM Local Health Systems Diagnostic Atlas</title>
+  <title>BARMM Health Atlas</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2319324f'/%3E%3Ctext x='32' y='41' font-family='Arial' font-size='28' font-weight='700' text-anchor='middle' fill='white'%3EB%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://unpkg.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -436,37 +436,400 @@
       .section-head { display: block; }
       table { min-width: 980px; }
     }
+    .app-shell {
+      min-height: 100vh;
+      background: #f4f7fb;
+    }
+    .topbar {
+      min-height: 82px;
+      background: linear-gradient(90deg, #042443 0%, #062b4e 58%, #073b66 100%);
+      color: #fff;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: center;
+      padding: 14px 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    }
+    .brand {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(255, 255, 255, 0.88);
+      transform: rotate(45deg);
+      color: #fff;
+      font-weight: 900;
+      font-size: 19px;
+    }
+    .brand-mark span { transform: rotate(-45deg); }
+    .topbar h1 {
+      color: #fff;
+      font-size: 25px;
+      line-height: 1.06;
+      margin: 0 0 4px;
+    }
+    .topbar p {
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 15px;
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .top-actions a {
+      color: #fff;
+      text-decoration: none;
+    }
+    .filterbar {
+      display: grid;
+      grid-template-columns: 34px minmax(170px, 1fr) minmax(190px, 1fr) minmax(190px, 1fr) minmax(230px, 1.25fr);
+      gap: 14px;
+      align-items: center;
+      padding: 12px 26px;
+      background: rgba(255,255,255,0.94);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 1px 0 rgba(16, 30, 50, 0.03);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .filter-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: var(--teal);
+      font-size: 23px;
+      font-weight: 900;
+    }
+    .filterbar .control {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+    .filterbar label {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: #243142;
+    }
+    .filterbar select,
+    .filterbar input {
+      min-height: 34px;
+      border-radius: 4px;
+      background: #fff;
+    }
+    .workbench {
+      display: grid;
+      grid-template-columns: 204px minmax(0, 1fr);
+      min-height: calc(100vh - 138px);
+    }
+    .journey-rail {
+      background: rgba(255, 255, 255, 0.85);
+      border-right: 1px solid var(--line);
+      padding: 24px 0;
+    }
+    .tabs {
+      display: block;
+      margin: 0;
+    }
+    .tab {
+      width: 100%;
+      min-height: 84px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      color: #4d5b69;
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      padding: 12px 18px;
+      text-align: left;
+      font-weight: 500;
+    }
+    .tab::before {
+      content: attr(data-step);
+      font-size: 21px;
+      color: #56677a;
+      font-weight: 700;
+      text-align: center;
+    }
+    .tab span {
+      display: block;
+      font-size: 13px;
+      line-height: 1.35;
+      color: inherit;
+    }
+    .tab.active {
+      background: #064165;
+      color: #fff;
+      border-color: #064165;
+    }
+    .tab.active::before { color: #fff; }
+    main {
+      min-width: 0;
+      padding: 0 26px 24px;
+    }
+    .executive-head {
+      padding: 20px 0 14px;
+    }
+    .executive-head h2 {
+      font-size: 29px;
+      color: #07264a;
+      line-height: 1.12;
+      margin-bottom: 8px;
+    }
+    .executive-head p {
+      max-width: 980px;
+      font-size: 14px;
+      color: #344558;
+    }
+    .notice {
+      border-radius: 4px;
+      margin: 12px 0 0;
+      padding: 8px 10px;
+      background: #fff8dc;
+    }
+    .metrics {
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 14px;
+      margin: 8px 0 14px;
+    }
+    .metric {
+      min-height: 86px;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: none;
+      padding: 14px;
+    }
+    .metric strong {
+      font-size: 30px;
+      color: #0b2d50;
+    }
+    .metric span {
+      font-size: 12px;
+      color: #26394c;
+    }
+    .panel .metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .panel .metric {
+      min-height: 74px;
+      padding: 10px;
+    }
+    .panel .metric strong {
+      font-size: 22px;
+    }
+    .panel .metric span {
+      font-size: 11px;
+    }
+    .section {
+      padding: 14px 0;
+      border-bottom: 0;
+      background: transparent;
+    }
+    .section.emphasis {
+      background: transparent;
+    }
+    .panel, .card, .path-step {
+      border-radius: 6px;
+      box-shadow: none;
+    }
+    #map {
+      height: 520px;
+      border-radius: 6px;
+      box-shadow: none;
+    }
+    .map-row {
+      grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.72fr);
+    }
+    .pathway-layout {
+      grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.72fr);
+    }
+    .path-step b {
+      color: #0b2d50;
+    }
+    .footer {
+      padding: 18px 0 28px;
+    }
+    @media (max-width: 1050px) {
+      .topbar {
+        display: block;
+      }
+      .top-actions {
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .filterbar {
+        position: static;
+        grid-template-columns: 1fr;
+      }
+      .filter-icon { display: none; }
+      .filterbar .control {
+        grid-template-columns: 1fr;
+      }
+      .workbench {
+        display: block;
+      }
+      .journey-rail {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 0;
+      }
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .tab {
+        min-height: 64px;
+        border-bottom: 0;
+        border-right: 1px solid var(--line);
+        padding: 9px;
+        grid-template-columns: 1fr;
+      }
+      .tab::before { display: none; }
+      main {
+        padding: 0 16px 20px;
+      }
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .map-row,
+      .pathway-layout,
+      .grid,
+      .findings,
+      .pathway-grid {
+        grid-template-columns: 1fr;
+      }
+      #map {
+        height: 380px;
+      }
+    }
+    @media (max-width: 620px) {
+      .topbar {
+        padding: 14px 16px;
+      }
+      .brand {
+        grid-template-columns: 44px minmax(0, 1fr);
+      }
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+        font-size: 15px;
+      }
+      .topbar h1 {
+        font-size: 23px;
+      }
+      .topbar p {
+        font-size: 13px;
+      }
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+      .executive-head h2 {
+        font-size: 23px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <aside>
-      <div class="eyebrow">BRIGHT-BARMM · 2026 diagnostic series</div>
-      <h1>BARMM Local Health Systems Diagnostic Atlas</h1>
-      <p>Evidence for UHC Action in Four Priority Jurisdictions. Figures are source-linked and caveated where the record remains provisional.</p>
-      <div class="notice" id="status-note">Loading source limitations...</div>
-      <div class="tabs" aria-label="View mode">
-        <button class="tab active" data-mode="pathway">Pathway</button>
-        <button class="tab" data-mode="province">Jurisdictions</button>
-        <button class="tab" data-mode="municipality">Municipalities</button>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span>BH</span></div>
+        <div>
+          <h1>BARMM Health Atlas</h1>
+          <p>Evidence for UHC action in four priority jurisdictions</p>
+        </div>
       </div>
+      <div class="top-actions">
+        <span id="source-line"></span>
+        <a href="assets/data/platform_data.json" download>Download data</a>
+        <span>Updated August 2026</span>
+      </div>
+    </header>
+
+    <div class="filterbar" aria-label="Atlas filters">
+      <div class="filter-icon" aria-hidden="true">☰</div>
       <div class="control">
-        <label for="province-filter">Jurisdiction</label>
+        <label for="province-filter">Geography</label>
         <select id="province-filter"></select>
       </div>
       <div class="control">
-        <label for="search">Municipality search</label>
-        <input id="search" type="search" placeholder="Search municipality..." />
-      </div>
-      <div class="control">
-        <label for="patient-selector">Patient pathway LGU</label>
+        <label for="patient-selector">Patient path</label>
         <select id="patient-selector"></select>
       </div>
-      <div class="metrics" id="metric-strip"></div>
-      <p id="source-line"></p>
-    </aside>
+      <div class="control">
+        <label for="population-basis">Population</label>
+        <select id="population-basis">
+          <option>2024 census</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="search">Find</label>
+        <input id="search" type="search" placeholder="Find a municipality..." />
+      </div>
+    </div>
 
-    <main>
+    <div class="workbench">
+      <aside class="journey-rail">
+        <div class="tabs" aria-label="Care pathway stages">
+          <button class="tab active" data-mode="pathway" data-step="01"><span>Who needs care?</span></button>
+          <button class="tab" data-mode="municipality" data-step="02"><span>Can residents reach first contact?</span></button>
+          <button class="tab" data-mode="municipality" data-step="03"><span>Is the facility ready?</span></button>
+          <button class="tab" data-mode="province" data-step="04"><span>Can patients move onward?</span></button>
+          <button class="tab" data-mode="pathway" data-step="05"><span>What must be verified?</span></button>
+        </div>
+      </aside>
+
+      <main>
+      <section class="executive-head">
+        <h2>From population need to a functioning care pathway</h2>
+        <p>This atlas helps leaders see whether local health systems can identify need, offer first-contact care, protect patients from unclear payment exposure, refer cases onward, and record what happened.</p>
+        <div class="notice" id="status-note">Loading source limitations...</div>
+      </section>
+
+      <div class="metrics" id="metric-strip"></div>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>Care Access Map</h2>
+            <p>Representative points show LGUs and jurisdiction centers. In pathway mode, the line links the selected LGU to the closest mapped municipality with a recorded hospital.</p>
+          </div>
+          <div class="legend">
+            <span><i class="dot" style="background: var(--blue)"></i>LDS</span>
+            <span><i class="dot" style="background: var(--teal)"></i>MDN</span>
+            <span><i class="dot" style="background: var(--gold)"></i>MDS</span>
+            <span><i class="dot" style="background: var(--red)"></i>SGA</span>
+          </div>
+        </div>
+        <div class="map-row">
+          <div id="map" role="application" aria-label="BARMM diagnostic map"></div>
+          <div class="panel" id="detail-panel"></div>
+        </div>
+      </section>
+
       <section class="section emphasis">
         <div class="section-head">
           <div>
@@ -480,25 +843,6 @@
             <h3>Facilities, Hubs, and Areas Needing Confirmation</h3>
             <div id="facility-network" class="network"></div>
           </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="section-head">
-          <div>
-            <h2>Map: First Contact and Referral</h2>
-            <p>Representative points show LGUs and jurisdiction centers. In pathway mode, the line links the selected LGU to the closest mapped municipality with a recorded hospital.</p>
-          </div>
-          <div class="legend">
-            <span><i class="dot" style="background: var(--blue)"></i>LDS</span>
-            <span><i class="dot" style="background: var(--teal)"></i>MDN</span>
-            <span><i class="dot" style="background: var(--gold)"></i>MDS</span>
-            <span><i class="dot" style="background: var(--red)"></i>SGA</span>
-          </div>
-        </div>
-        <div class="map-row">
-          <div id="map" role="application" aria-label="BARMM diagnostic map"></div>
-          <div class="panel" id="detail-panel"></div>
         </div>
       </section>
 
@@ -574,6 +918,7 @@
 
       <div class="footer" id="footer"></div>
     </main>
+  </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

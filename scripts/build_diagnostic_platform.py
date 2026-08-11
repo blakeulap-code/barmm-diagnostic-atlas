@@ -487,8 +487,8 @@ def build() -> None:
 
     platform = {
         "metadata": {
-            "title": "BARMM Local Health Systems Diagnostic Atlas",
-            "subtitle": "Evidence for UHC Action in Four Priority Jurisdictions",
+            "title": "BARMM Health Atlas",
+            "subtitle": "Evidence for UHC action in four priority jurisdictions",
             "source_workbook": SOURCE_XLSX.name,
             "source_workbook_url": "https://docs.google.com/spreadsheets/d/1lbx97k43fZVXFIpayd1_vY0BftZ4st9S9_C6sVewYeo/edit",
             "drive_folder_url": "https://drive.google.com/drive/folders/1UpMs323gPKlaMpQ1WvpAKnvM6RL6C9yb",

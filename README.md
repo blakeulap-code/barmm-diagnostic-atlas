@@ -1,10 +1,9 @@
-# BARMM Local Health Systems Diagnostic Atlas
+# BARMM Health Atlas
 
-BARMM Local Health Systems Diagnostic Atlas is a shareable, map-first findings
-platform for evidence-informed UHC action in four priority jurisdictions. The
-GitHub Pages version is designed for external leaders and preserves the reports'
-provisional status and denominator caveats without exposing internal QA working
-registers.
+BARMM Health Atlas is a shareable, map-first findings platform for
+evidence-informed UHC action in four priority jurisdictions. The GitHub Pages
+version is designed for external leaders and preserves the reports' provisional
+status and denominator caveats without exposing internal QA working registers.
 
 ## What is included
 
