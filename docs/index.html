@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BARMM Health Systems Diagnostic Atlas</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2319324f'/%3E%3Ctext x='32' y='41' font-family='Arial' font-size='28' font-weight='700' text-anchor='middle' fill='white'%3EB%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #16202a;
+      --muted: #5e6b78;
+      --line: #d8dee7;
+      --paper: #ffffff;
+      --panel: #f5f7fa;
+      --deep: #19324f;
+      --blue: #2463a7;
+      --teal: #23847a;
+      --gold: #b7791f;
+      --red: #b24036;
+      --green: #2f7d54;
+      --shadow: 0 8px 26px rgba(20, 31, 43, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--panel);
+      letter-spacing: 0;
+    }
+    a { color: var(--blue); }
+    .shell {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    aside {
+      background: var(--paper);
+      border-right: 1px solid var(--line);
+      padding: 22px;
+      overflow: auto;
+      max-height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+    main { min-width: 0; }
+    .eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 29px;
+      line-height: 1.06;
+      margin: 0 0 10px;
+      letter-spacing: 0;
+    }
+    h2 {
+      font-size: 19px;
+      margin: 0;
+      letter-spacing: 0;
+    }
+    h3 {
+      font-size: 15px;
+      margin: 0 0 8px;
+      letter-spacing: 0;
+    }
+    p {
+      color: var(--muted);
+      line-height: 1.52;
+      margin: 0;
+      font-size: 13px;
+    }
+    .notice {
+      border: 1px solid #e6d8a8;
+      background: #fff8dc;
+      color: #614b10;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.45;
+      margin: 18px 0;
+    }
+    .control { margin: 16px 0; }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      color: #2d3642;
+      margin-bottom: 7px;
+    }
+    select, input {
+      width: 100%;
+      min-height: 39px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 10px;
+      font-size: 13px;
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      margin: 16px 0;
+    }
+    .tab {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 7px;
+      padding: 9px 8px;
+      font-weight: 800;
+      color: #2f3a46;
+      cursor: pointer;
+      min-height: 38px;
+    }
+    .tab.active {
+      color: #fff;
+      background: var(--deep);
+      border-color: var(--deep);
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 76px;
+    }
+    .metric strong {
+      display: block;
+      font-size: 23px;
+      line-height: 1.05;
+      margin-bottom: 6px;
+    }
+    .metric span {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+    .section {
+      padding: 22px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-end;
+      margin-bottom: 14px;
+    }
+    .map-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(300px, 0.9fr);
+      gap: 14px;
+    }
+    #map {
+      height: 560px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #dfe7ed;
+      box-shadow: var(--shadow);
+    }
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+      min-width: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-width: 0;
+    }
+    .card.selected {
+      outline: 2px solid var(--blue);
+      outline-offset: 1px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e9f1fb;
+      color: #17446f;
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 9px;
+    }
+    .bar {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: #edf1f6;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .bar > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--teal);
+    }
+    .list {
+      display: grid;
+      gap: 9px;
+      max-height: 410px;
+      overflow: auto;
+      padding-right: 3px;
+    }
+    .item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+    }
+    .item button {
+      width: 100%;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .item strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+    .item span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .findings {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      padding: 9px;
+      border-bottom: 1px solid #e8edf3;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #f1f5f9;
+      z-index: 1;
+      color: #334155;
+    }
+    .table-wrap {
+      max-height: 420px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      display: inline-block;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    .footer {
+      padding: 18px 22px 28px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .leaflet-popup-content { font-family: inherit; }
+    @media (max-width: 1050px) {
+      .shell { display: block; }
+      aside {
+        max-height: none;
+        position: static;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .map-row, .grid, .findings {
+        grid-template-columns: 1fr;
+      }
+      #map { height: 440px; }
+    }
+    @media (max-width: 620px) {
+      aside, .section { padding: 16px; }
+      h1 { font-size: 25px; }
+      .metrics { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      table { min-width: 680px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="eyebrow">BRIGHT-BARMM · 2026 diagnostic series</div>
+      <h1>BARMM Health Systems Diagnostic Atlas</h1>
+      <p>External-facing findings platform for the four-jurisdiction diagnostic series. Figures are source-linked and caveated where the record remains provisional.</p>
+      <div class="notice" id="status-note">Loading source limitations...</div>
+      <div class="tabs" aria-label="View mode">
+        <button class="tab active" data-mode="province">Jurisdictions</button>
+        <button class="tab" data-mode="municipality">Municipalities</button>
+      </div>
+      <div class="control">
+        <label for="province-filter">Jurisdiction</label>
+        <select id="province-filter"></select>
+      </div>
+      <div class="control">
+        <label for="search">Municipality search</label>
+        <input id="search" type="search" placeholder="Search municipality..." />
+      </div>
+      <div class="metrics" id="metric-strip"></div>
+      <p id="source-line"></p>
+    </aside>
+
+    <main>
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>Decision Map</h2>
+            <p>Representative points show diagnostic units. Select a jurisdiction or municipality to inspect the finding, evidence base, and caveats.</p>
+          </div>
+          <div class="legend">
+            <span><i class="dot" style="background: var(--blue)"></i>LDS</span>
+            <span><i class="dot" style="background: var(--teal)"></i>MDN</span>
+            <span><i class="dot" style="background: var(--gold)"></i>MDS</span>
+            <span><i class="dot" style="background: var(--red)"></i>SGA</span>
+          </div>
+        </div>
+        <div class="map-row">
+          <div id="map" role="application" aria-label="BARMM diagnostic map"></div>
+          <div class="panel" id="detail-panel"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>Four Jurisdictions, Four Constraints</h2>
+            <p>The regional diagnostic treats each area as having a different first constraint and a different first instrument.</p>
+          </div>
+        </div>
+        <div class="grid" id="jurisdiction-cards"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>Regional Findings</h2>
+            <p>These are the platform-level findings that bind decisions across more than one jurisdiction.</p>
+          </div>
+        </div>
+        <div class="findings" id="findings"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>Municipal Drilldown</h2>
+            <p>Municipal rows come from the consolidated master table. Empty fields mean not available in the source, not zero.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Municipality</th>
+                <th>Population</th>
+                <th>Barangays</th>
+                <th>RHUs</th>
+                <th>RHU gap</th>
+                <th>Coverage</th>
+                <th>Beds / 1k</th>
+              </tr>
+            </thead>
+            <tbody id="municipal-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>Evidence Gaps and QA Flags</h2>
+            <p>The platform keeps unresolved issues visible because they condition allocation, procurement, costing, and publication.</p>
+          </div>
+        </div>
+        <div class="map-row">
+          <div class="panel">
+            <h3>Highest-consequence evidence gaps</h3>
+            <div class="list" id="gaps"></div>
+          </div>
+          <div class="panel">
+            <h3>Open QA flags</h3>
+            <div class="list" id="qa"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>Source Register</h2>
+            <p>All source reports are Google Docs exports captured in the consolidated workbook.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Report</th>
+                <th>Coverage</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="sources"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="footer" id="footer"></div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const colors = { LDS: "#2463a7", MDN: "#23847a", MDS: "#b7791f", SGA: "#b24036", BARMM: "#19324f" };
+    const fmt = new Intl.NumberFormat("en-US");
+    let data, map, layer, selectedCode = "BARMM", mode = "province";
+
+    const number = (value, suffix = "") => {
+      if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) return "n.m.";
+      return fmt.format(Number(value)) + suffix;
+    };
+    const pct = (value) => {
+      if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) return "n.m.";
+      return (Number(value) * 100).toFixed(1) + "%";
+    };
+    const text = (value) => value === null || value === undefined || value === "" ? "Not measured" : String(value);
+    const esc = (value) => String(value ?? "").replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
+
+    fetch("assets/data/platform_data.json")
+      .then(response => response.json())
+      .then(payload => {
+        data = payload;
+        init();
+      });
+
+    function init() {
+      document.getElementById("status-note").textContent = data.metadata.status_note;
+      document.getElementById("source-line").innerHTML = `<a href="${data.metadata.source_workbook_url}" target="_blank" rel="noreferrer">Source workbook</a> · <a href="${data.metadata.drive_folder_url}" target="_blank" rel="noreferrer">Drive folder</a>`;
+      document.getElementById("footer").textContent = `Built from ${data.metadata.source_workbook}. Last generated ${data.metadata.built_at}. Representative coordinates are for map orientation only.`;
+      renderFilters();
+      renderMetrics(data.totals);
+      renderMap();
+      renderJurisdictionCards();
+      renderFindings();
+      renderTables();
+      renderEvidence();
+      bindEvents();
+    }
+
+    function bindEvents() {
+      document.querySelectorAll(".tab").forEach(button => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+          button.classList.add("active");
+          mode = button.dataset.mode;
+          selectedCode = mode === "province" ? "BARMM" : "";
+          renderMap();
+          renderTables();
+        });
+      });
+      document.getElementById("province-filter").addEventListener("change", event => {
+        selectedCode = event.target.value;
+        renderMap();
+        renderTables();
+      });
+      document.getElementById("search").addEventListener("input", () => {
+        if (mode !== "municipality") {
+          mode = "municipality";
+          document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.mode === "municipality"));
+        }
+        renderMap();
+        renderTables();
+      });
+    }
+
+    function renderFilters() {
+      const select = document.getElementById("province-filter");
+      const options = [`<option value="BARMM">All four jurisdictions</option>`]
+        .concat(data.jurisdictions.filter(j => j["Report code"] !== "BARMM").map(j => `<option value="${esc(j["Report code"])}">${esc(j.Jurisdiction)}</option>`));
+      select.innerHTML = options.join("");
+    }
+
+    function renderMetrics(t) {
+      document.getElementById("metric-strip").innerHTML = [
+        ["LGUs", number(t.lgus)],
+        ["Residents", number(t.population)],
+        ["Barangays", number(t.barangays)],
+        ["Registered facilities", number(t.registered_facilities)],
+        ["RHUs held / implied", `${number(t.rhus_held)} / ${number(t.rhus_implied)}`],
+        ["Referral observations", number(t.referral_completion_observations)]
+      ].map(([label, value]) => `<div class="metric"><strong>${value}</strong><span>${label}</span></div>`).join("");
+    }
+
+    function filteredMunicipalities() {
+      const province = document.getElementById("province-filter").value;
+      const query = document.getElementById("search").value.trim().toLowerCase();
+      return data.municipalities.filter(row => {
+        const inProvince = province === "BARMM" || row.Report === province;
+        const inQuery = !query || String(row["Local government unit"]).toLowerCase().includes(query);
+        return inProvince && inQuery;
+      });
+    }
+
+    function renderMap() {
+      if (!map) {
+        map = L.map("map", { scrollWheelZoom: false }).setView([7.25, 124.35], 8);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+          attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+      }
+      if (layer) layer.remove();
+      layer = L.layerGroup().addTo(map);
+      const rows = mode === "province"
+        ? data.jurisdictions.filter(j => j["Report code"] !== "BARMM" && Number(j.centroid_lat))
+        : filteredMunicipalities().filter(m => Number(m.centroid_lat));
+      const bounds = [];
+      rows.forEach(row => {
+        const code = row["Report code"] || row.Report;
+        const lat = Number(row.centroid_lat);
+        const lon = Number(row.centroid_lon);
+        const marker = L.circleMarker([lat, lon], {
+          radius: mode === "province" ? 12 : 7,
+          color: "#fff",
+          weight: 2,
+          fillColor: colors[code] || "#607080",
+          fillOpacity: 0.9
+        }).addTo(layer);
+        marker.bindPopup(popupHtml(row, mode));
+        marker.on("click", () => {
+          selectedCode = mode === "province" ? code : row["Local government unit"];
+          renderDetail(row, mode);
+          renderJurisdictionCards();
+        });
+        bounds.push([lat, lon]);
+      });
+      if (bounds.length) map.fitBounds(bounds, { padding: [28, 28], maxZoom: mode === "province" ? 8 : 10 });
+      const selected = mode === "province" && selectedCode !== "BARMM"
+        ? data.jurisdictions.find(j => j["Report code"] === selectedCode)
+        : mode === "municipality"
+          ? filteredMunicipalities()[0]
+          : data.jurisdictions.find(j => j["Report code"] === "LDS");
+      renderDetail(selected, mode);
+    }
+
+    function popupHtml(row, rowMode) {
+      if (rowMode === "province") {
+        return `<strong>${esc(row.Jurisdiction)}</strong><br>${esc(row.constraint)}<br>${number(row["LIVE  Sum of LGU rows"])} residents`;
+      }
+      return `<strong>${esc(row["Local government unit"])}</strong><br>${esc(row["Province / area"])}<br>${number(row["Population 2024"])} residents<br>${esc(row.coordinate_precision)}`;
+    }
+
+    function renderDetail(row, rowMode) {
+      const panel = document.getElementById("detail-panel");
+      if (!row) {
+        panel.innerHTML = "<h3>No record selected</h3><p>Adjust the filters to show diagnostic records.</p>";
+        return;
+      }
+      if (rowMode === "province") {
+        panel.innerHTML = `
+          <span class="badge">${esc(row.constraint)}</span>
+          <h2>${esc(row.Jurisdiction)}</h2>
+          <p>${esc(row.summary)}</p>
+          <div class="metrics">
+            <div class="metric"><strong>${number(row["LIVE  Sum of LGU rows"])}</strong><span>Residents</span></div>
+            <div class="metric"><strong>${number(row["LIVE  Sum of LGU rows.1"])}</strong><span>Barangays</span></div>
+            <div class="metric"><strong>${number(row["LIVE  Sum of LGU rows.2"])} / ${number(row["RHUs implied as printed (Regional Table 4)"])}</strong><span>RHUs held / implied</span></div>
+            <div class="metric"><strong>${number(row["LIVE  Shortfall"])}</strong><span>RHU shortfall</span></div>
+          </div>
+          <h3>First instrument</h3>
+          <p>${esc(row.first_instrument)}</p>
+          <h3 style="margin-top:14px">Caveat</h3>
+          <p>${esc(row.Note)}</p>`;
+      } else {
+        panel.innerHTML = `
+          <span class="badge">${esc(row.Report)}</span>
+          <h2>${esc(row["Local government unit"])}</h2>
+          <p>${esc(row["Province / area"])} · ${esc(row.coordinate_precision)}</p>
+          <div class="metrics">
+            <div class="metric"><strong>${number(row["Population 2024"])}</strong><span>Residents</span></div>
+            <div class="metric"><strong>${number(row["Barangays (as annexed)"])}</strong><span>Barangays</span></div>
+            <div class="metric"><strong>${number(row["Rural health units (as annexed)"])}</strong><span>RHUs held</span></div>
+            <div class="metric"><strong>${pct(row["LIVE  Barangay coverage share"])}</strong><span>Barangay coverage</span></div>
+          </div>
+          <h3>Evidence note</h3>
+          <p>${esc(row["Basis and caveat"])}</p>`;
+      }
+    }
+
+    function renderJurisdictionCards() {
+      document.getElementById("jurisdiction-cards").innerHTML = data.jurisdictions
+        .filter(j => j["Report code"] !== "BARMM")
+        .map(j => {
+          const coverage = Number(j["LIVE  Sum of LGU rows.1"]) ? Number(j["LIVE  Sum of LGU rows.1"]) : 0;
+          const gap = Number(j["LIVE  Shortfall"] || 0);
+          const implied = Number(j["RHUs implied as printed (Regional Table 4)"] || 1);
+          const width = Math.max(0, Math.min(100, 100 - (gap / implied) * 100));
+          return `<div class="card ${selectedCode === j["Report code"] ? "selected" : ""}">
+            <span class="badge" style="background:${colors[j["Report code"]]}22;color:${colors[j["Report code"]]}">${esc(j.constraint)}</span>
+            <h3>${esc(j.Jurisdiction)}</h3>
+            <p>${esc(j.headline)}</p>
+            <div class="bar" title="RHU sufficiency"><span style="width:${width}%"></span></div>
+            <p style="margin-top:8px">${number(j["LIVE  Sum of LGU rows"])} residents · ${number(coverage)} barangays</p>
+          </div>`;
+        }).join("");
+    }
+
+    function renderFindings() {
+      document.getElementById("findings").innerHTML = data.findings.map(f => `
+        <div class="card">
+          <h3>${esc(f.title)}</h3>
+          <p>${esc(f.body)}</p>
+          <p style="margin-top:10px"><strong>Source:</strong> ${esc(f.locator)}</p>
+        </div>`).join("");
+    }
+
+    function renderTables() {
+      const rows = filteredMunicipalities();
+      document.getElementById("municipal-table").innerHTML = rows.slice(0, 120).map(row => `
+        <tr>
+          <td><strong>${esc(row["Local government unit"])}</strong><br><span>${esc(row["Province / area"])}</span></td>
+          <td>${number(row["Population 2024"])}</td>
+          <td>${number(row["Barangays (as annexed)"])}</td>
+          <td>${number(row["Rural health units (as annexed)"])}</td>
+          <td>${number(row["LIVE  RHU shortfall (rounded up)"])}</td>
+          <td>${pct(row["LIVE  Barangay coverage share"])}</td>
+          <td>${number(row["LIVE  Beds per 1,000 residents"])}</td>
+        </tr>`).join("");
+    }
+
+    function renderEvidence() {
+      document.getElementById("gaps").innerHTML = data.evidence_gaps.slice(0, 14).map(g => `
+        <div class="item">
+          <strong>${esc(g.number)}. ${esc(g.gap)}</strong>
+          <span>${esc(g.why_it_binds)}</span>
+        </div>`).join("");
+      document.getElementById("qa").innerHTML = data.qa_flags.slice(0, 20).map(q => `
+        <div class="item">
+          <strong>${esc(q.Class)} · ${esc(q["Report(s)"])}</strong>
+          <span>${esc(q.Finding)}</span>
+        </div>`).join("");
+      document.getElementById("sources").innerHTML = data.sources.map(s => `
+        <tr>
+          <td>${esc(s.Code)}</td>
+          <td><a href="${esc(s.Link)}" target="_blank" rel="noreferrer">${esc(s["Report title"])}</a></td>
+          <td>${esc(s["Coverage as declared"])}</td>
+          <td>${esc(s["Status as declared"])}</td>
+        </tr>`).join("");
+    }
+  </script>
+</body>
+</html>

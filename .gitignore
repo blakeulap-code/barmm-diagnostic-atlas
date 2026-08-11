@@ -1,0 +1,17 @@
+*
+!.gitignore
+!README.md
+!docs/
+!docs/**
+!.github/
+!.github/**
+!scripts/
+!scripts/build_diagnostic_platform.py
+!barmm_ebdm_pipeline/
+!barmm_ebdm_pipeline/data/
+!barmm_ebdm_pipeline/data/input/
+!barmm_ebdm_pipeline/data/input/diagnostics/
+!barmm_ebdm_pipeline/data/input/diagnostics/BARMM_Health_Systems_Diagnostics_Consolidated_Data_20260811.xlsx
+!barmm_ebdm_pipeline/data/output/
+!barmm_ebdm_pipeline/data/output/diagnostic_platform/
+!barmm_ebdm_pipeline/data/output/diagnostic_platform/**

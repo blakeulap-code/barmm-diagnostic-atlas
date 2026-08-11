@@ -1,0 +1,28 @@
+Field / column,Appears on,Definition,Unit,Basis and source layer,"Fact, derived or assumption"
+Report,all sheets,"Five-character code for the source volume: BARMM, LDS, MDN, MDS, SGA.",code,Assigned in this workbook.,Metadata
+Label,"03_Table_Index, domain sheets","The table, exhibit or annex label as printed in the source volume.",text,Source document.,Fact
+Section no. / Subsection no.,"02, 03, domain sheets",The numbered section and subsection in which the item sits.,text,Source document body headings.,Fact
+Printed page,"02, 03, locator blocks",The page number carried by that report's own contents list for the section or subsection in which the item sits.,page,"Source document contents list, as at the export date.","Fact, volatile — moves on repagination"
+Population 2024,"10, 11, 14, 16","Resident population at the 2024 Census of Population, reference date 1 July 2024.",persons,Layer A — Philippine Statistics Authority 2024 Census and PSGC.,Fact
+Barangays (as annexed),"10, 11","Barangay count as carried by the volume's Annex A. Lanao del Sur uses the 1,159-node 2020 model geography.",count,Layer A — PSA / PSGC.,"Fact, denominator disputed for LDS"
+Barangays with / without a first-contact facility,"10, 16",Barangays carrying at least one registered first-contact service point. MDN and LDS count registered barangay health stations; MDS counts registered facilities of any type; SGA counts municipally enumerated service points.,count,Layer C — project-held DOH/NHFR facility extract; Layer E — municipal EBDM worksheet enumeration.,"Fact, definitions not commensurable across volumes"
+Rural health units,"10, 11, 16",Rural health units as carried by Annex A. For SGA the register basis (9) is used; the operating basis is 6.,count,"Layer C — DOH/NHFR extract, cross-checked against Layer E.","Fact, basis conflict for SGA"
+Licensed beds,"10, 14",Licensed bed complement of all classes. The Lanao del Sur Annex A carries no bed column; bed data for that province sits on 14_Inpatient_Capacity from Table 6 and Table 6A.,beds,Layer C — DOH-HFSRB licensing records as held by the project.,Fact
+FIC %,10,Fully immunised child coverage.,per cent,Layer B — FHSIS / draft 2024 BARMM LGU Health Scorecard.,Fact
+FBD %,10,Facility-based delivery.,per cent,Layer B — FHSIS / Scorecard; MDS value is a 2018 vintage.,"Fact, vintage varies"
+TB CNR,10,"Tuberculosis case notification rate per 100,000 population.","per 100,000",Layer B — national TB programme returns as carried by the volumes.,Fact
+TB detection %,10,Notified cases as a share of expected incident cases.,per cent,Derived in the source volumes from notification against modelled incidence.,Derived in source
+PhilPEN %,10,Adults risk-assessed under the Philippine Package of Essential NCD Interventions.,per cent,Layer B — FHSIS.,Fact
+Stunting %,10,Stunting prevalence among children under five.,per cent,Layer D — survey estimate.,Fact
+LIVE  Population per RHU,10,Population 2024 divided by rural health units held. Returns 'no RHU recorded' where the unit count is zero.,persons per unit,Computed in this workbook from columns F and J.,Derived — live formula
+"LIVE  RHUs implied at 1:20,000","10, 11, 16","ROUNDUP(population / 20,000). The 1:20,000 figure is a planning target for catchment, not a licensing standard for facilities.",units,Computed in this workbook.,Derived — live formula
+LIVE  RHU shortfall,"10, 11, 16","Implied units less units held, floored at zero.",units,Computed in this workbook.,Derived — live formula
+LIVE  Barangay coverage share,"10, 16",Barangays with a first-contact facility divided by barangays.,per cent,Computed in this workbook.,Derived — live formula
+"LIVE  Beds per 1,000 residents","10, 14","Licensed beds divided by population, multiplied by 1,000.","beds per 1,000",Computed in this workbook.,Derived — live formula
+LIVE  Variance,"10, 11, 12, 13, 14, 15, 16","The live recomputation less the figure printed in the source. A non-zero variance is a reconciliation item, not a correction.",same as the underlying measure,Computed in this workbook.,Derived — live formula
+Row type,10,LGU · Provincial or area total as annexed · Non-component reference. Only rows typed 'LGU' enter the roll-ups on 11_Jurisdiction_Rollup.,category,Assigned in this workbook from the annex row labels.,Metadata
+Evidence layer A,all,"Census, PSGC and other national statistical frames.",—,Philippine Statistics Authority.,Metadata
+Evidence layer B,all,Routine service statistics — FHSIS and the draft 2024 BARMM LGU Health Scorecard.,—,MOH-BARMM.,Metadata
+Evidence layer C,all,Facility registers — project-held DOH / NHFR extract and DOH-HFSRB licensing records.,—,Department of Health.,Metadata
+Evidence layer D,all,Independent survey measurement — World Bank BARMM household survey and comparable instruments.,—,World Bank.,Metadata
+Evidence layer E,all,"Municipal EBDM worksheet submissions, BARMM 20260629 package (MDN, LDS, SGA) and the 20260624 package (MDS, earlier cycle).",—,BRIGHT-BARMM EBDM workstream.,Metadata
