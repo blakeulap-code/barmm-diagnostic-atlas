@@ -584,57 +584,62 @@
       background: #fff;
     }
     .workbench {
-      display: grid;
-      grid-template-columns: clamp(190px, 15vw, 224px) minmax(0, 1fr);
       min-height: calc(100vh - 138px);
     }
-    .journey-rail {
-      background: rgba(255, 255, 255, 0.85);
-      border-right: 1px solid var(--line);
-      padding: 20px 0;
-      min-width: 0;
-    }
-    .tabs {
-      display: block;
-      margin: 0;
-    }
-    .tab {
-      width: 100%;
-      min-height: 84px;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      color: #4d5b69;
+    .question-tabs {
       display: grid;
-      grid-template-columns: 58px minmax(0, 1fr);
-      gap: 8px;
-      align-items: center;
-      padding: 12px 18px;
-      text-align: left;
-      font-weight: 500;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      margin: 0 0 10px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #e8edf4;
     }
-    .tab::before {
-      content: attr(data-step);
-      font-size: 21px;
-      color: #56677a;
+    .question-tab {
+      min-width: 0;
+      min-height: 58px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: #445467;
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 7px;
+      align-items: center;
+      padding: 8px 10px;
+      text-align: left;
       font-weight: 700;
+      cursor: pointer;
+    }
+    .question-tab::before {
+      content: attr(data-step);
+      font-size: 14px;
+      color: #56677a;
+      font-weight: 900;
       text-align: center;
     }
-    .tab span {
+    .question-tab span {
       display: block;
-      font-size: 13px;
-      line-height: 1.35;
+      font-size: 12px;
+      line-height: 1.28;
       color: inherit;
     }
-    .tab.active {
+    .question-tab:hover {
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--deep);
+    }
+    .question-tab.active {
       background: #064165;
       color: #fff;
       border-color: #064165;
+      box-shadow: 0 3px 10px rgba(6, 65, 101, 0.16);
     }
-    .tab.active::before { color: #fff; }
+    .question-tab.active::before { color: #fff; }
     main {
       min-width: 0;
+      width: min(100%, 1800px);
+      margin: 0 auto;
       padding: 0 clamp(20px, 2.4vw, 38px) 30px;
     }
     .executive-head {
@@ -759,6 +764,10 @@
       .map-row {
         grid-template-columns: minmax(0, 1.5fr) minmax(310px, 0.8fr);
       }
+      .question-tab {
+        grid-template-columns: 26px minmax(0, 1fr);
+        padding-inline: 8px;
+      }
     }
     @media (max-width: 1050px) {
       .topbar {
@@ -783,37 +792,25 @@
       .filterbar .control {
         grid-template-columns: auto minmax(0, 1fr);
       }
-      .workbench {
-        grid-template-columns: 1fr;
-      }
-      .journey-rail {
-        border-right: 0;
-        border-bottom: 1px solid var(--line);
-        padding: 0;
-        position: sticky;
-        top: var(--filterbar-height, 0px);
-        z-index: 15;
+      .question-tabs {
+        grid-template-columns: none;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(146px, 1fr);
         overflow-x: auto;
         scrollbar-width: thin;
+        min-width: 0;
       }
-      .tabs {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(146px, 1fr));
-        min-width: 730px;
-      }
-      .tab {
+      .question-tab {
         min-height: 62px;
-        border-bottom: 0;
-        border-right: 1px solid var(--line);
         padding: 8px 12px;
         grid-template-columns: 34px minmax(0, 1fr);
         gap: 6px;
       }
-      .tab::before {
+      .question-tab::before {
         display: block;
         font-size: 15px;
       }
-      .tab span {
+      .question-tab span {
         font-size: 12px;
         line-height: 1.28;
       }
@@ -900,20 +897,16 @@
       .filterbar label {
         font-size: 11px;
       }
-      .journey-rail {
-        top: 0;
+      .question-tabs {
+        grid-auto-columns: 132px;
         scroll-snap-type: x proximity;
       }
-      .tabs {
-        grid-template-columns: repeat(5, 132px);
-        min-width: 660px;
-      }
-      .tab {
+      .question-tab {
         min-height: 58px;
         padding: 8px 9px;
         scroll-snap-align: start;
       }
-      .tab span {
+      .question-tab span {
         font-size: 11px;
       }
       main {
@@ -1005,16 +998,6 @@
     </div>
 
     <div class="workbench">
-      <aside class="journey-rail">
-        <div class="tabs" aria-label="Patient pathway questions">
-          <button class="tab active" data-question="counting" data-step="01"><span>Is the illness being counted?</span></button>
-          <button class="tab" data-question="basic-care" data-step="02"><span>Can residents get basic care nearby?</span></button>
-          <button class="tab" data-question="payment" data-step="03"><span>Is payment protection clear?</span></button>
-          <button class="tab" data-question="referral" data-step="04"><span>Where should residents be referred?</span></button>
-          <button class="tab" data-question="record" data-step="05"><span>Did the system record the outcome?</span></button>
-        </div>
-      </aside>
-
       <main>
       <section class="executive-head">
         <h2>From population need to a functioning care pathway</h2>
@@ -1037,9 +1020,16 @@
             <span><i class="dot" style="background: var(--red)"></i>SGA</span>
           </div>
         </div>
+        <div class="question-tabs" role="tablist" aria-label="Patient pathway questions">
+          <button class="question-tab active" id="question-tab-counting" type="button" role="tab" aria-selected="true" aria-controls="detail-panel" tabindex="0" data-question="counting" data-step="01"><span>Is the illness being counted?</span></button>
+          <button class="question-tab" id="question-tab-basic-care" type="button" role="tab" aria-selected="false" aria-controls="detail-panel" tabindex="-1" data-question="basic-care" data-step="02"><span>Can residents get basic care nearby?</span></button>
+          <button class="question-tab" id="question-tab-payment" type="button" role="tab" aria-selected="false" aria-controls="detail-panel" tabindex="-1" data-question="payment" data-step="03"><span>Is payment protection clear?</span></button>
+          <button class="question-tab" id="question-tab-referral" type="button" role="tab" aria-selected="false" aria-controls="detail-panel" tabindex="-1" data-question="referral" data-step="04"><span>Where should residents be referred?</span></button>
+          <button class="question-tab" id="question-tab-record" type="button" role="tab" aria-selected="false" aria-controls="detail-panel" tabindex="-1" data-question="record" data-step="05"><span>Did the system record the outcome?</span></button>
+        </div>
         <div class="map-row">
           <div id="map" role="application" aria-label="BARMM diagnostic map"></div>
-          <div class="panel" id="detail-panel"></div>
+          <div class="panel" id="detail-panel" role="tabpanel" aria-labelledby="question-tab-counting" aria-live="polite"></div>
         </div>
       </section>
 
@@ -1179,13 +1169,24 @@
     }
 
     function bindEvents() {
-      document.querySelectorAll(".tab").forEach(button => {
+      const questionTabs = [...document.querySelectorAll(".question-tab")];
+      questionTabs.forEach((button, index) => {
         button.addEventListener("click", () => {
-          document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-          button.classList.add("active");
+          activateQuestionTab(button);
           selectedQuestion = button.dataset.question;
           mode = "pathway";
           renderQuestionAnswer(findMunicipalityById(selectedMunicipalityId) || filteredMunicipalities()[0]);
+        });
+        button.addEventListener("keydown", event => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          let nextIndex = index;
+          if (event.key === "ArrowLeft") nextIndex = (index - 1 + questionTabs.length) % questionTabs.length;
+          if (event.key === "ArrowRight") nextIndex = (index + 1) % questionTabs.length;
+          if (event.key === "Home") nextIndex = 0;
+          if (event.key === "End") nextIndex = questionTabs.length - 1;
+          questionTabs[nextIndex].focus();
+          questionTabs[nextIndex].click();
         });
       });
       document.getElementById("province-filter").addEventListener("change", event => {
@@ -1208,6 +1209,17 @@
         renderTables();
       });
       window.addEventListener("resize", syncStickyOffsets);
+    }
+
+    function activateQuestionTab(activeButton) {
+      document.querySelectorAll(".question-tab").forEach(button => {
+        const isActive = button === activeButton;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-selected", String(isActive));
+        button.tabIndex = isActive ? 0 : -1;
+      });
+      document.getElementById("detail-panel").setAttribute("aria-labelledby", activeButton.id);
+      activeButton.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
 
     function syncStickyOffsets() {
